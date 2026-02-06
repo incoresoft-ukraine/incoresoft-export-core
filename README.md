@@ -2,7 +2,7 @@
 
 A JavaScript/TypeScript library for exporting video recordings from streaming servers. Supports chunked downloads, progress tracking, and multiple export formats (MKV, AVI).
 
-**[Live Demo](https://incoresoft-ukraine.github.io/incoresoft-export-core/)** | **[Releases](https://incoresoft-ukraine.github.io/incoresoft-export-core/releases)**
+**[Live Demo](https://incoresoft-ukraine.github.io/incoresoft-export-core/)** | **[Releases](https://github.com/incoresoft-ukraine/incoresoft-export-core/releases)**
 
 ## Features
 
@@ -34,11 +34,10 @@ Download `index.html` from the [Releases](https://github.com/incoresoft-ukraine/
 
 ### Option 2: Include in Your Project
 
-Download the library files from [Releases](https://github.com/user/repo/releases):
+Download the library files from [Releases](https://github.com/incoresoft-ukraine/incoresoft-export-core/releases):
 
 - `incoresoft-export-core.umd.js` - For `<script>` tag usage
 - `incoresoft-export-core.es.js` - For ES modules
-- `style.css` - Required styles (optional, only if using Vue components)
 
 #### Using Script Tag (UMD)
 
@@ -47,14 +46,22 @@ Download the library files from [Releases](https://github.com/user/repo/releases
 <script>
   const { createExportEngine, EExportFormat } = IncoresoftExportCore;
 
+  // Recommended: Using VMS credentials
   const engine = createExportEngine({
-    getExportLink: async (payload) => {
-      const response = await fetch(`/api/export?stream=${payload.stream_uuid}&start=${payload.start_date}&end=${payload.end_date}`);
-      const data = await response.json();
-      return { link: data.link };
-    },
+    vmsServerUrl: 'https://your-vms-server.com',
+    vmsAuthToken: 'your-auth-token',
     format: EExportFormat.MKV
   });
+
+  // Alternative: Using custom callback (for custom APIs)
+  // const engine = createExportEngine({
+  //   getExportLink: async (payload) => {
+  //     const response = await fetch(`/api/export?stream=${payload.stream_uuid}`);
+  //     const data = await response.json();
+  //     return { link: data.link };
+  //   },
+  //   format: EExportFormat.MKV
+  // });
 </script>
 ```
 
@@ -67,11 +74,20 @@ import {
   EChunkStatus
 } from './incoresoft-export-core.es.js';
 
+// Recommended: Using VMS credentials
 const engine = createExportEngine({
-  getExportLink: async (payload) => {
-    return { link: 'https://...' };
-  }
+  vmsServerUrl: 'https://your-vms-server.com',
+  vmsAuthToken: 'your-auth-token',
+  format: EExportFormat.MKV
 });
+
+// Alternative: Using custom callback (for custom APIs)
+// const engine = createExportEngine({
+//   getExportLink: async (payload) => {
+//     return { link: 'https://...' };
+//   },
+//   format: EExportFormat.MKV
+// });
 ```
 
 ---
@@ -80,11 +96,48 @@ const engine = createExportEngine({
 
 ### Creating the Export Engine
 
+The export engine can be created in two modes:
+
+1. **VMS Credentials Mode** (Recommended) - Provide `vmsServerUrl` and `vmsAuthToken` for built-in API integration
+2. **Custom Callback Mode** (Advanced) - Provide your own `getExportLink` function for custom APIs
+
+#### Mode 1: VMS Credentials (Recommended)
+
+Use this mode for direct integration with VMS servers. Simply provide your server URL and authentication token. The library will automatically call the VMS API endpoint:
+
+```
+GET {vmsServerUrl}/api/v1/cameras/streams/{stream_uuid}/export_link?format=...&start_date=...&end_date=...&with_audio=...
+Authorization: Bearer {vmsAuthToken}
+```
+
 ```javascript
 import { createExportEngine, EExportFormat } from '@incoresoft/export-core';
 
 const engine = createExportEngine({
-  // Required: Function to get download link from your server
+  // VMS server URL (base URL without trailing slash)
+  vmsServerUrl: 'https://your-vms-server.com',
+
+  // Bearer token for authentication
+  vmsAuthToken: 'your-auth-token-here',
+
+  // Optional settings
+  format: EExportFormat.MKV,
+  minChunkDuration: 60000,
+  enableBeforeUnloadWarning: true,
+  onExportSuccess: () => console.log('Export completed!'),
+  onChunkError: (errorCode) => console.error('Chunk failed:', errorCode)
+});
+```
+
+#### Mode 2: Custom Callback (Advanced)
+
+Use this mode when you have a custom API or need full control over how export links are fetched.
+
+```javascript
+import { createExportEngine, EExportFormat } from '@incoresoft/export-core';
+
+const engine = createExportEngine({
+  // Custom function to get download link from your server
   getExportLink: async (payload) => {
     // payload contains:
     // - stream_uuid: string
@@ -106,24 +159,27 @@ const engine = createExportEngine({
     return { link: data.downloadUrl };
   },
 
-  // Optional: Export format (default: MKV)
+  // Optional settings
   format: EExportFormat.MKV,
-
-  // Optional: Minimum chunk duration in ms (default: 120000 = 2 minutes)
   minChunkDuration: 60000,
-
-  // Optional: Show browser warning when closing during export (default: true)
   enableBeforeUnloadWarning: true,
-
-  // Optional: Callbacks
-  onExportSuccess: () => {
-    console.log('Export completed successfully!');
-  },
-  onChunkError: (errorCode) => {
-    console.error('Chunk failed:', errorCode);
-  }
+  onExportSuccess: () => console.log('Export completed!'),
+  onChunkError: (errorCode) => console.error('Chunk failed:', errorCode)
 });
 ```
+
+#### Options Reference
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `vmsServerUrl` | `string` | - | VMS server base URL (recommended approach) |
+| `vmsAuthToken` | `string` | - | VMS auth token (required with vmsServerUrl) |
+| `getExportLink` | `function` | - | Custom callback to fetch export links (alternative to VMS credentials) |
+| `format` | `EExportFormat` | `MKV` | Export format (MKV or AVI) |
+| `minChunkDuration` | `number` | `120000` | Minimum chunk duration in ms |
+| `enableBeforeUnloadWarning` | `boolean` | `true` | Show warning when closing page during export |
+| `onExportSuccess` | `function` | - | Called when export completes successfully |
+| `onChunkError` | `function` | - | Called when a chunk fails to download |
 
 ### Adding Items to Export Queue
 
@@ -299,10 +355,8 @@ const {
   startExport,
   cancel
 } = useExportEngine({
-  getExportLink: async (payload) => {
-    // Your implementation
-    return { link: '...' };
-  }
+  vmsServerUrl: 'https://your-vms-server.com',
+  vmsAuthToken: 'your-auth-token'
 });
 
 // Provide to child components
@@ -365,26 +419,10 @@ const filename = generateFilename(
 ```javascript
 import { createExportEngine, EExportFormat } from '@incoresoft/export-core';
 
-// 1. Create engine with your API integration
+// 1. Create engine with VMS credentials
 const engine = createExportEngine({
-  getExportLink: async (payload) => {
-    const params = new URLSearchParams({
-      format: payload.format,
-      start_date: payload.start_date.toString(),
-      end_date: payload.end_date.toString(),
-      with_audio: payload.with_audio.toString()
-    });
-
-    const response = await fetch(
-      `https://your-server.com/api/streams/${payload.stream_uuid}/export?${params}`,
-      {
-        headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
-      }
-    );
-
-    const data = await response.json();
-    return { link: data.link };
-  },
+  vmsServerUrl: 'https://your-vms-server.com',
+  vmsAuthToken: 'your-auth-token-here',
   format: EExportFormat.MKV,
   onExportSuccess: () => alert('Export completed!'),
   onChunkError: (error) => console.error('Error:', error)
@@ -456,4 +494,3 @@ document.getElementById('cancelBtn').onclick = () => {
 ## License
 
 MIT
-
