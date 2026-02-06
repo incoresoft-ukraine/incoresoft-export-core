@@ -2,6 +2,8 @@
 
 A JavaScript/TypeScript library for exporting video recordings from streaming servers. Supports chunked downloads, progress tracking, and multiple export formats (MKV, AVI).
 
+**[Live Demo](https://incoresoft-ukraine.github.io/incoresoft-export-core/)** | **[Releases](https://incoresoft-ukraine.github.io/incoresoft-export-core/releases)**
+
 ## Features
 
 - Automatic video splitting into hourly chunks for reliable downloads
