@@ -16,7 +16,7 @@ A JavaScript/TypeScript library for exporting video recordings from streaming se
 
 ### Option 1: Standalone Demo (index.html)
 
-Download `index.html` from the [Releases](https://github.com/user/repo/releases) page and open it directly in your browser. This is a fully self-contained demo application.
+Download `index.html` from the [Releases](https://github.com/incoresoft-ukraine/incoresoft-export-core/releases) page and open it directly in your browser. This is a fully self-contained demo application.
 
 **Usage:**
 
